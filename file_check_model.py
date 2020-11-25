@@ -1,79 +1,99 @@
-import sys, os, shutil, random
+## usage : folder file classify Model
+## made by Yuna Bae.
+
+import sys, os, shutil, random, time
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
+
+# 변경사항 : 1. 구분 기준 (날짜 -> 파일 확장자별?)
+#          2. 폴더 path 입력 받기
 
 class main(QWidget):
     def __init__(self):
         super().__init__()
-        self.srcDir = "/Users/baeyuna/Documents/univ/swp2/ad/files/"
-        self.desDir = "/Users/baeyuna/Documents/univ/swp2/ad/files/"
-        self.year = ["2019", "2020", "2021"]
-        self.month = ["{0:02}".format(x+1) for x in range(0,12)]
-        self.tv = QTableView(self)
-        self.model = QStandardItemModel(12,3)
-        self.btnRnd = QPushButton("랜덤파일생성(1000)")
-        self.btnClss = QPushButton("파일분류")
+        # self.srcDir = "/Users/baeyuna/Documents/univ/swp2/12-1"
+        self.extensions = [".py", ".ipynb", ".pdf", 'zip', 'dat', 'csv']
+        self.pathedit = QLineEdit()
+        self.pathlbl = QLabel(self)
+        self.pathedit.setText("                                                                 분류할 폴더 경로를 입력하세요. ")
+        self.searchbutton = QPushButton("경로지정")
+        self.btnClss = QPushButton("확장자 파일분류")
+        self.btnClss2 = QPushButton("생성날짜 파일분류")
+        self.resultlbl = QLabel(self)
         self.setUi()
         self.setSlot()
 
     def setUi(self):
-        self.setGeometry(300, 300, 400, 500)
-        self.setWindowTitle("QTableView")
+        self.setGeometry(300, 300, 700, 400)
+        self.setWindowTitle("파일 식별기")
 
-        self.tv.setModel(self.model)
-        self.model.setHorizontalHeaderLabels(self.year)
-        self.model.setVerticalHeaderLabels(self.month)
+        # self.tv.setModel(self.model)
+        # self.table.setColumnCount(len(self.extensions))
+        # self.table.setRowCount(1)
+        vbox1 = QVBoxLayout()
+        vbox1.addWidget(self.pathedit)
+        vbox1.addWidget(self.searchbutton)
+
+        hbox = QHBoxLayout()
+        hbox.addWidget(self.btnClss)
+        hbox.addWidget(self.btnClss2)
+
+        vbox2 = QVBoxLayout()
+        vbox2.addWidget(self.pathlbl)
+        vbox2.addWidget(self.resultlbl)
+
         vbox = QVBoxLayout()
-        vbox.addWidget(self.btnRnd)
-        vbox.addWidget(self.btnClss)
-        vbox.addWidget(self.tv)
+        vbox.addLayout(vbox1)
+        vbox.addLayout(hbox)
+        vbox.addLayout(vbox2)
         self.setLayout(vbox)
 
+    def pathClicked(self):
+        self.file_path = self.pathedit.text()
+        self.file_list = os.listdir(self.file_path)
+        self.pathlbl.setText(f"{self.file_path} 폴더 파일을 분류하겠습니다.")
+        return
+
     def setSlot(self):
-        self.btnRnd.clicked.connect(self.rndCrtFile)
-        self.btnClss.clicked.connect(
-            lambda s, srcDir = self.srcDir, desDir = self.desDir:
-            self.classify(s, srcDir, desDir))
+        self.searchbutton.clicked.connect(self.pathClicked)
+        self.btnClss.clicked.connect(self.classify)
+        self.btnClss2.clicked.connect(self.check_publishtime)
+        return
 
-    def classify(self, s, srcDir, desDir):
-        fileList = os.listdir(srcDir)
+    def classify(self):
+        self.file_count_dict = dict(zip(self.extensions, [0]*len(self.extensions)))
+        for extension in self.extensions:
+            file_num = len([file for file in self.file_list if file.endswith(extension)])
+            self.file_count_dict[extension] = file_num
 
-        for name in fileList:
-            y = name[5:9]
-            m = name[10:12]
+        answer = ""
+        for i in range(len(self.file_count_dict)):
+            answer += f"{list(self.file_count_dict.values())[i]}개의 {list(self.file_count_dict.keys())[i]}가 존재합니다. \n"
 
-            export = desDir + y + "/" + m
-            if not os.path.isdir(export):
-                os.makedirs(export)
-            shutil.copyfile(srcDir + name, export + "/" + name)
+        self.resultlbl.setText(answer)
+        return
 
-        for yidx, y in enumerate(self.year):
-            for midx, m in enumerate(self.month):
-                self.model.setData(self.model.index(midx, yidx),
-                                   len(os.listdir(self.desDir + y+ "/" + m)))
+    def check_publishtime(self):
+        self.file_time_dict = {}
+        for file in self.file_list:
+            file_time = time.ctime(os.path.getctim(f"{self.file_path}/{file}"))
+            if file_time not in self.file_time_dict:
+                self.file_time_dict[file_time] = 1
+            else:
+                self.file_time_dict[file_time] += 1
+        self.file_time_dict = sorted(self.file_time_dict.items(), reverse=True)
+        self.filetimelbl.setText(self.file_time_dict)
 
-    def rndCrtFile(self):
-        for i in range(1000):
-            y = random.randint(2019, 2021)
-            m = random.randint(1,12)
-            d = random.randint(1, 30)
-            tmp = random.randrange(9999)
-            f = open(self.srcDir + "test_{0}-{1:02}-{2:02}({3}).txt".format(y, m, d, tmp), "w")
-            f.close()
+        answer = ""
+        for i in range(len(self.file_time_dict)):
+            answer += f"{list(self.file_time_dict.values())[i]}개의 {list(self.file_time_dict.keys())[i]}가 존재합니다. \n"
 
-app = QApplication([])
-ex = main()
-ex.show()
-sys.exit(app.exec_())
-
-
+        self.resultlbl.setText(answer)
+        return
 
 
-
-
-
-
-
-
-
-
+if __name__ == '__main__':
+    app = QApplication([])
+    ex = main()
+    ex.show()
+    sys.exit(app.exec_())
