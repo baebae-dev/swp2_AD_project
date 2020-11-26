@@ -50,6 +50,7 @@ class main(QWidget):
 
     def pathClicked(self):
         self.file_path = self.pathedit.text()
+        self.pathedit.clear()
         self.file_list = os.listdir(self.file_path)
         self.pathlbl.setText(f"{self.file_path} 폴더 파일을 분류하겠습니다.")
         return
@@ -76,21 +77,22 @@ class main(QWidget):
     def check_publishtime(self):
         self.file_time_dict = {}
         for file in self.file_list:
-            file_time = time.ctime(os.path.getctim(f"{self.file_path}/{file}"))
-            if file_time not in self.file_time_dict:
-                self.file_time_dict[file_time] = 1
+            file_time = time.ctime(os.path.getctime(f"{self.file_path}/{file}"))
+            times = file_time.split(" ")
+            year = times[4]; month = times[1]; day = times[2];
+            str_time = f"{year} {month} {day}"
+            if str_time not in self.file_time_dict:
+                self.file_time_dict[str_time] = 1
             else:
-                self.file_time_dict[file_time] += 1
+                self.file_time_dict[str_time] += 1
         self.file_time_dict = sorted(self.file_time_dict.items(), reverse=True)
-        self.filetimelbl.setText(self.file_time_dict)
 
         answer = ""
         for i in range(len(self.file_time_dict)):
-            answer += f"{list(self.file_time_dict.values())[i]}개의 {list(self.file_time_dict.keys())[i]}가 존재합니다. \n"
+            answer += f"{self.file_time_dict[i][0]}에 생성한 파일이 {self.file_time_dict[i][1]}개 존재합니다. \n"
 
         self.resultlbl.setText(answer)
         return
-
 
 if __name__ == '__main__':
     app = QApplication([])
