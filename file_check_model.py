@@ -5,8 +5,12 @@ import sys, os, shutil, random, time
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
-# 변경사항 : 1. 구분 기준 (날짜 -> 파일 확장자별?)
+# 변경사항 : 1. 구분 기준 (날짜 -> 파일 확장자별?) & 생성 날자별 (기존 파일명에 날짜를 넣어 랜덤하게 생성 -> 파일 정보상의 생성 날짜를 가져와 자동 분류해줌)
 #          2. 폴더 path 입력 받기
+#          3. 분류된 파일, 군집 별로 폴더 생성 후 폴더 안에 저장
+
+# What To Do : 1. 결과 표로 보이게 생성
+
 
 class main(QWidget):
     def __init__(self):
@@ -19,6 +23,7 @@ class main(QWidget):
         self.searchbutton = QPushButton("경로지정")
         self.btnClss = QPushButton("확장자 파일분류")
         self.btnClss2 = QPushButton("생성날짜 파일분류")
+        self.btnmove = QPushButton("분류 폴더생성")
         self.resultlbl = QLabel(self)
         self.setUi()
         self.setSlot()
@@ -39,6 +44,7 @@ class main(QWidget):
         hbox.addWidget(self.btnClss2)
 
         vbox2 = QVBoxLayout()
+        vbox2.addWidget(self.btnmove)
         vbox2.addWidget(self.pathlbl)
         vbox2.addWidget(self.resultlbl)
 
@@ -59,6 +65,7 @@ class main(QWidget):
         self.searchbutton.clicked.connect(self.pathClicked)
         self.btnClss.clicked.connect(self.classify)
         self.btnClss2.clicked.connect(self.check_publishtime)
+        self.btnmove.clicked.connect(self.folder_move)
         return
 
     def classify(self):
@@ -93,6 +100,41 @@ class main(QWidget):
 
         self.resultlbl.setText(answer)
         return
+
+    # 폴더 생성 및 분류
+    def folder_move(self):
+        # 확장자별 분류
+        if len(self.resultlbl.text().split(" ")) == 3:
+            for extenstion in self.extensions:
+                try:
+                    dir = self.file_path + "/" + extenstion
+                    os.makedirs(dir)
+                    for file in self.file_list:
+                        if file.endswith(extenstion):
+                            shutil.move(self.file_path+"/"+file, dir+"/"+file)
+                except:
+                    print(f"Error: Creating directory. {dir}")
+
+        # 생성 날짜별 분류
+        else:
+            for key in self.file_time_dict:
+                date = key[0]
+                try:
+                    dir = self.file_path + "/" + date
+                    os.makedirs(dir)
+                    for file in self.file_list:
+                        file_time = time.ctime(os.path.getctime(f"{self.file_path}/{file}"))
+                        times = file_time.split(" ")
+                        year = times[4];
+                        month = times[1];
+                        day = times[2];
+                        str_time = f"{year} {month} {day}"
+                        if str_time == date:
+                            shutil.move(self.file_path+"/"+file. dir+"/"+file)
+                except:
+                    print(f"Error: Creating directory. {dir}")
+
+
 
 if __name__ == '__main__':
     app = QApplication([])
