@@ -104,6 +104,7 @@ class main(QWidget):
         for file in self.file_list:
             file_time = time.ctime(os.path.getctime(f"{self.file_path}/{file}"))
             times = file_time.split(" ")
+            times = [x for x in times if x != ""]
             year = times[4]; month = times[1]; day = times[2];
             str_time = f"{year}_{month}_{day}"
             if str_time not in self.file_time_dict:
@@ -149,46 +150,52 @@ class main(QWidget):
         if self.criterion == "확장자별 분류":
             for extenstion in self.extensions:
                 # 분류 폴더 생성
-                try:
-                    dir = self.folderpath + "/" + extenstion
+                dir = self.folderpath + "/" + extenstion
+                if not os.path.exists(dir):
                     os.makedirs(dir)
-                    for file in self.file_list:
-                        if file.endswith(extenstion):
-                            shutil.copy(file, self.folderpath+"/"+file)
-                except:
-                    print(f"Error: Creating directory. {dir}")
+                for file in self.file_list:
+                    if file.endswith(extenstion):
+                        try:
+                            shutil.copy(self.file_path+"/"+file, dir + "/" + file)
+                        except:
+                            print(f"can't move {file} files")
 
         # 생성 날짜별 분류
         elif self.criterion== "생성날짜별 분류":
             for key in self.file_time_dict:
                 date = key[0]
                 try:
-                    dir = self.folderpath + "/" + date
-                    os.makedirs(dir)
+                    dir = self.folderpath + "/" + date + "/"
+                    if not os.path.exists(dir):
+                        os.makedirs(dir)
                     for file in self.file_list:
                         file_time = time.ctime(os.path.getctime(f"{self.file_path}/{file}"))
                         times = file_time.split(" ")
+                        times = [x for x in times if x != ""]
                         year = times[4];
                         month = times[1];
                         day = times[2];
-                        str_time = f"{year} {month} {day}"
+                        str_time = f"{year}_{month}_{day}"
                         if str_time == date:
-                            shutil.copy(file, self.folderpath+"/"+file)
+                            try:
+                                shutil.copy(self.file_path + "/" + file, dir + file)
+                            except:
+                                print(f"can't move {file} files")
                 except:
                     print(f"Error: Creating directory. {dir}")
 
         # 키워드별 분류
         elif self.criterion == "키워드별 분류":
             for i in range(len(self.keyword_dict)):
-                try:
-                    dir = self.folderpath + "/" + list(self.keyword_dict.keys())[i]
+                dir = self.folderpath + "/" + list(self.keyword_dict.keys())[i] + "/"
+                if not os.path.exists(dir):
                     os.makedirs(dir)
-                    files = self.keyword_dict.values()[i]
-                    for file in files:
-                        shutil.copy(file, self.folderpath+"/"+file) # self.file_path+"/"+
-                except:
-                    print(f"Error: Creating directory. {dir}")
-
+                files = self.keyword_dict.values()[i]
+                for file in files:
+                    try:
+                        shutil.copy(self.file_path+"/"+file, dir + file) # self.file_path+"/"+
+                    except:
+                        print(f"Error: Creating directory. {dir}")
         return
 
     def okClicked(self):
