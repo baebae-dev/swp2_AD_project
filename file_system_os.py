@@ -19,12 +19,12 @@ class main(QWidget):
         #  분류 폴더 경로 지정
         self.pathlabel = QLabel(" 분류할 폴더 경로 지정 => ")
         self.pathlabel.setStyleSheet("background-color: rgb(226, 255, 208);")
-        self.pathedit = QLineEdit("C:\\protest1\\")
+        self.pathedit = QLineEdit(" ")
 
         #  정리될 폴더 경로 지정
         self.folderlabel = QLabel(" 정리될 폴더 경로 지정 => ")
         self.folderlabel.setStyleSheet("background-color: rgb(226, 255, 208);")
-        self.folderedit = QLineEdit("C:\\protest2\\")
+        self.folderedit = QLineEdit(" ")
         #  키워드 분류시 키워드 지정
         self.keylabel = QLabel(" 키워드 분류시 =>            ")
         self.keylabel.setStyleSheet("background-color: rgb(226, 255, 208);")
