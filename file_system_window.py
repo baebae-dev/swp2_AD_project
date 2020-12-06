@@ -1,3 +1,5 @@
+## usage : folder file classify Model
+## made by Yuna Bae & Sunghyuk Oh
 
 import sys, os, shutil, time
 from PyQt5.QtWidgets import *
