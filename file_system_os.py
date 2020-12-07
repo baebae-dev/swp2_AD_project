@@ -1,28 +1,27 @@
 ## usage : folder file classify Model
-## made by Yuna Bae & Sunghyuk Oh
-
+## made by Yuna Bae
 
 import sys, os, shutil, time
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
-
+from PyQt5.QtCore import QCoreApplication
 
 
 class main(QWidget):
     def __init__(self):
         super().__init__()
-        self.extensions = ["py", "ipynb", "pdf", 'zip', 'dat', 'csv','ui']  # 분류할 확장자 기준값 지정 
+        self.extensions = ["py", "ipynb", "pdf", 'zip', 'dat', 'csv', 'ui']
         self.extens = ['분류개수']
 
         #  분류 폴더 경로 지정
         self.pathlabel = QLabel(" 분류할 폴더 경로 지정 => ")
         self.pathlabel.setStyleSheet("background-color: rgb(226, 255, 208);")
-        self.pathedit = QLineEdit(" ")
+        self.pathedit = QLineEdit()
 
         #  정리될 폴더 경로 지정
         self.folderlabel = QLabel(" 정리될 폴더 경로 지정 => ")
         self.folderlabel.setStyleSheet("background-color: rgb(226, 255, 208);")
-        self.folderedit = QLineEdit(" ")
+        self.folderedit = QLineEdit()
         #  키워드 분류시 키워드 지정
         self.keylabel = QLabel(" 키워드 분류시 =>            ")
         self.keylabel.setStyleSheet("background-color: rgb(226, 255, 208);")
@@ -55,14 +54,19 @@ class main(QWidget):
         self.tableView = QTableView()
         self.tableView.setModel(self.model)
 
+        # CLOSE 버튼
+        self.closebutton = QPushButton("CLOSE")
+        self.closebutton.setStyleSheet("font: 75 20pt \"Berlin Sans FB Demi\";\n"
+                                    "background-color: rgb(250, 250, 250);")
+
         self.setUi()
         self.setSlot()
 
-    # 전반적 위젯 배치 설정 
     def setUi(self):
         self.setGeometry(100, 100, 750, 520)
         self.setWindowTitle("파일 식별기")
         self.okbutton.setMinimumSize(90, 50)
+        self.closebutton.setMinimumSize(90, 50)
 
         hbox = QHBoxLayout()
 
@@ -92,6 +96,7 @@ class main(QWidget):
         # 분류 박스 위젯
         hbox5 = QHBoxLayout()
         hbox5.addWidget(self.okbutton)
+        hbox5.addWidget(self.closebutton)
         hbox5.stretch(1)
 
         vbox1 = QVBoxLayout()
@@ -118,14 +123,17 @@ class main(QWidget):
 
         self.setLayout(hbox)
 
-    # 위젯 동작 연결 함수 
+    # 위젯 동작 연결
     def setSlot(self):
         self.okbutton.clicked.connect(self.okClicked)
+        self.closebutton.clicked.connect(QCoreApplication.instance().quit)  # 종료 버튼
         return
+
 
     # 확장자별 분류 함수
     def ex_classify(self):
         self.model = QStandardItemModel(7, 1)
+        self.extensions = ["py", "ipynb", "pdf", 'zip', 'dat', 'csv', 'ui']
         self.tableView.setModel(self.model)
         self.model.setHorizontalHeaderLabels(self.extens)
         self.model.setVerticalHeaderLabels(self.extensions)
@@ -134,49 +142,45 @@ class main(QWidget):
         self.file_count_dict = {}
         for extension in self.extensions:
             for file in self.file_list:
-                if file.endswith(extension): 
-                    # {확장자별(딕셔너리 키) : 확장자 폴더 리스트형식 저장}
+                if file.endswith(extension):
                     if extension not in self.file_count_dict:
                         self.file_count_dict[extension] = [file]
                     else:
                         self.file_count_dict[extension].append(file)
-                        
-        # 확장자별 파일 개수 보여줄 table 표 생성 
+        # 확장자별 파일 개수 세기
         for yidx, y in enumerate(self.extens):
             for xidx, x in enumerate(self.extensions):
                 try:
                     kk = len(list(self.file_count_dict.values())[xidx])
-                    self.model.setData(self.model.index(xidx, yidx),kk)
+                    self.model.setData(self.model.index(xidx, yidx), kk)
                 except:
-                    self.model.setData(self.model.index(xidx, yidx),0)
+                    self.model.setData(self.model.index(xidx, yidx), 0)
 
-        # 분류 기준별 개수 text 생성 
         answer = ""
         for i in range(len(self.file_count_dict)):
             answer += f"{list(self.file_count_dict.keys())[i]} extension file : {len(list(self.file_count_dict.values())[i])}개 \n"
         self.tableView.setModel(self.model)
-        if answer == "":
-            answer = "분류할 파일이 없습니다."
         self.resultlbl2.setText(answer)
         return
 
     # 생성날짜별 분류 함수
     def time_classify(self):
         self.file_time_dict = {}
+        self.flist = []
         for file in self.file_list:
-            file_time = time.ctime(os.path.getctime(f"{self.file_path}/{file}")) # 파일 생성 날짜 가져오기 
+            file_time = time.ctime(os.path.getctime(f"{self.file_path}/{file}"))
             times = file_time.split(" ")
-            times = [x for x in times if x != ""] # time 정보 "" 비이상적 정보 처리 
+            times = [x for x in times if x != ""]
             year = times[4]; month = times[1]; day = times[2];
-            str_time = f"{year}_{month}_{day}" # 폴더 생성을 위해 "_" 문자 처리 
+            str_time = f"{year}_{month}_{day}"
+            if str_time not in self.flist:
+                self.flist.append(str_time)
             if str_time not in self.file_time_dict:
                 self.file_time_dict[str_time] = [file]
             else:
                 self.file_time_dict[str_time].append(file)
         self.file_time_dict = sorted(self.file_time_dict.items(), reverse=True)
 
-        # table view 틀 생성 
-        self.flist = list(file_time_dict.keys())
         self.model = QStandardItemModel(len(self.flist), 1)
         self.model.setHorizontalHeaderLabels(self.extens)
         self.model.setVerticalHeaderLabels(self.flist)
@@ -185,16 +189,12 @@ class main(QWidget):
             for xidx, x in enumerate(self.flist):
                 try:
                     kk = len(self.file_time_dict[xidx][1])
-                    self.model.setData(self.model.index(xidx, yidx),kk)
+                    self.model.setData(self.model.index(xidx, yidx), kk)
                 except:
-                    self.model.setData(self.model.index(xidx, yidx),0)
-        
-        # 날짜별 폴더 개수 text 생성 
+                    self.model.setData(self.model.index(xidx, yidx), 0)
         answer = ""
         for i in range(len(self.file_time_dict)):
             answer += f"{self.file_time_dict[i][0]} date created file : {len(self.file_time_dict[i][1])}개 \n"
-        if answer == "":
-            answer = "분류할 파일이 없습니다."
 
         self.tableView.setModel(self.model)
         self.resultlbl2.setText(answer)
@@ -221,52 +221,49 @@ class main(QWidget):
             if keyword not in self.keyword_dict.keys():
                 self.keyword_dict[keyword] = ''
 
-        for yidx, y in enumerate(self.extens): # 오류 있음 (찾는 파일이 0개일 때)
+        for yidx, y in enumerate(self.extens):  # 오류 고침(찾는 파일이 0개일 때)
             for xidx, x in enumerate(self.keywords):
                 try:
                     kk = len(list(self.keyword_dict.values())[xidx])
-                    self.model.setData(self.model.index(xidx, yidx),kk)
+                    self.model.setData(self.model.index(xidx, yidx), kk)
                 except:
-                    self.model.setData(self.model.index(xidx, yidx),0)
+                    self.model.setData(self.model.index(xidx, yidx), 0)
 
         answer = ""
         for i in range(len(self.keyword_dict)):
             answer += f"{list(self.keyword_dict.keys())[i]} keyword file : {len(list(self.keyword_dict.values())[i])}개 \n"
 
-        if answer == "":
-            answer = "분류할 파일이 없습니다."
         self.tableView.setModel(self.model)
         self.resultlbl2.setText(answer)
         return
 
     # 폴더 분류 함수
     def folder_move(self):
-        self.criterion = self.cb.currentText() # 분류기준 값 가져오기 
+        self.criterion = self.cb.currentText()
         self.folderpath = self.folderedit.text()
         self.folderedit.clear()  # 다음 연속해서 값을 받기위해 위젯 초기화
 
         # 확장자별 분류
         if self.criterion == "확장자별 분류":
             for extenstion in self.extensions:
-                # 분류 폴더 경로 지정 
-                dir = self.folderpath + "/" + extenstion
-                # 폴더가 없을 경우 만들기 (폴더가 기존에 있을경우 생기는 오류를 막기위해 조건 확인!)
-                if not os.path.exists(dir):
-                    os.makedirs(dir)
+                if extenstion in list(self.file_count_dict.keys()):
+                    # 분류 폴더 생성
+                    dir = self.folderpath + "/" + extenstion
+                    if not os.path.exists(dir):
+                        os.makedirs(dir)
 
                 for file in self.file_list:
                     if file.endswith(extenstion):
                         try:
-                            shutil.copy(file, self.folderpath + "/" + file)
+                            shutil.copy(self.file_path+"/"+file, dir + "/" + file)
                         except:
-                            print(f"can't move {file} files") # 이동할수 없는 (폴더)의 경우 오류 경고 출력
+                            print(f"can't move {file} files")
 
         # 생성 날짜별 분류
-        elif self.criterion== "날짜별 분류":
+        elif self.criterion == "날짜별 분류":
             for key in self.file_time_dict:
                 date = key[0]
                 dir = self.folderpath + "/" + date + "/"
-                # 폴더가 없을 경우 만들기 (폴더가 기존에 있을경우 생기는 오류를 막기위해 조건 확인!)
                 if not os.path.exists(dir):
                     os.makedirs(dir)
 
@@ -274,13 +271,11 @@ class main(QWidget):
                     file_time = time.ctime(os.path.getctime(f"{self.file_path}/{file}"))
                     times = file_time.split(" ")
                     times = [x for x in times if x != ""]
-                    year = times[4];
-                    month = times[1];
-                    day = times[2];
-                    str_time = f"{year} {month} {day}"
+                    year = times[4]; month = times[1]; day = times[2];
+                    str_time = f"{year}_{month}_{day}"
                     if str_time == date:
                         try:
-                            shutil.copy(file, self.folderpath + "/" + file)
+                            shutil.copy(self.file_path + "/" + file, dir + file)
                         except:
                             print(f"can't move {file} files")
 
@@ -293,37 +288,37 @@ class main(QWidget):
                 files = list(self.keyword_dict.values())[i]
                 for file in files:
                     try:
-                        shutil.copy(self.file_path + "/" + file, dir + file)  # self.file_path+"/"+
+                        shutil.copy(self.file_path+"/"+file, dir + file) # self.file_path+"/"+
                     except:
-                        print(f"can't move {file} files")
+                        print(f"Error: Creating directory. {dir}")
+
         return
 
-    # ok button 누르면 연동 함수
-    # 전체 실행 함수 틀 설정됨.
     def okClicked(self):
         # 1. 경로 폴더 가져오기.
-        self.file_path = self.pathedit.text() # 지정된 폴더 경로 가져오기.
-        self.pathedit.clear() # 다음 연속해서 값을 받기위해 위젯 초기화
-        self.file_list = os.listdir(self.file_path) # 해당 지정 경로의 파일 리스트 가져오기.
-        self.resultlbl1.setText(f"{self.file_path} 폴더 파일을 분류하겠습니다.")  #  분류할 폴더 위치 사용자 보여주기
+        self.file_path = self.pathedit.text()  # 지정된 폴더 경로 가져오기.
+        self.pathedit.clear()  # 다음 연속해서 값을 받기위해 위젯 초기화
+        self.file_list = os.listdir(self.file_path)  # 해당 지정 경로의 파일 리스트 가져오기.
+        self.resultlbl1.setText(f"{self.file_path} 폴더 파일을 분류하겠습니다.")  # 분류할 폴더 위치 사용자 보여주기
 
         # 2. 폴더 지정 분류 기준으로 분류하기
-        self.criterion = self.cb.currentText() # 분류기준 가져오기.
+        self.criterion = self.cb.currentText()  # 분류기준 가져오기.
         if self.criterion == "확장자별 분류":
             self.ex_classify()
 
-        elif self.criterion== "날짜별 분류":
+        elif self.criterion == "날짜별 분류":
             self.time_classify()
 
         elif self.criterion == "키워드별 분류":
             self.keyword_classify()
 
-        # 3. 분류된 폴더 지정된 폴더로 분류하기 & 4. Table view showing
+        # 3. 분류된 폴더 지정된 폴더로 분류하기
         self.folder_move()
         self.resultlbl3.setText(
             f"{self.file_path} 폴더의 파일 {len(self.file_list)}개를 {self.criterion}에 따라 \n \t 지정된 폴더 {self.folderpath}에 분류 완료하였습니다.")
 
         return
+
 
 if __name__ == '__main__':
     app = QApplication([])
