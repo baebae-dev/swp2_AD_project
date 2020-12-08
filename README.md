@@ -28,3 +28,6 @@ swp2_AD project
 
 
 ```
+
+## 시연 영상
+https://www.youtube.com/watch?v=tBNw0ZY-pzw&t=10s
